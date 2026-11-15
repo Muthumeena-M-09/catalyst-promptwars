@@ -1,6 +1,29 @@
 # Kindred
 
-A responsive elderly care prototype, built without dependencies.
+A responsive elderly care app with visual pill badges and Supabase account storage. No npm dependencies required. Requires Node 22.16+.
+
+## Connect Supabase
+
+1. Copy `.env.example` to `.env` in this project folder:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+2. Open `.env` and replace the key placeholder:
+
+   ```dotenv
+   SUPABASE_URL=https://fjkydwoilewkgueznotx.supabase.co
+   SUPABASE_PUBLISHABLE_KEY=your_publishable_key_here
+   ```
+
+   Get the publishable key from your Supabase project's API Keys settings. Legacy `anon` keys also work. Do not enter a database password, secret key, service-role key, or PostgreSQL connection string. `.env` is ignored by Git. `/config.js` exposes only these two public settings; the HTTP server never serves `.env`.
+
+3. In Supabase **SQL Editor**, paste and run `supabase/schema.sql` **once** in a new project. It creates profiles, medications, dose logs, appointments, care-circle membership, access policies, and transactional save/load functions. This is an initial schema, not a repeatable migration. Do not rerun over existing tables.
+
+4. Enable email/password sign-in in Supabase Authentication. Set the Auth Site URL and allowed redirect URL to `http://127.0.0.1:3000`. After confirming your email, return to the app and sign in. Use your HTTPS domain when deploying.
+
+5. Start or restart the server after editing `.env`. Create an account, confirm your email if required, sign in, and create a care profile. New profiles start empty; demo medications are never uploaded. Add a medication, mark it taken, reload, and verify the record. Sign in from another browser to the same account to verify cross-device persistence.
 
 ## Run
 
@@ -8,7 +31,7 @@ A responsive elderly care prototype, built without dependencies.
 npm run dev
 ```
 
-Open http://localhost:3000. Run `npm run check` for JavaScript syntax validation.
+Open http://127.0.0.1:3000. Run `npm run check` for JavaScript syntax validation and `npm test` for mocked integration tests.
 
 ## Included
 
@@ -18,9 +41,15 @@ Open http://localhost:3000. Run `npm run check` for JavaScript syntax validation
 - Appointment creation, notes, and removal
 - Mood check-ins, activity feed, and demo care circle
 - Configurable unconfirmed-dose prompts and a family check-in acknowledgement
-- Browser-local persistence and cross-tab updates
+- Supabase sign-up, sign-in, sign-out, and access-token refresh
+- Account profiles and transactional database persistence
+- Local demo mode when no Supabase key is configured
 - Responsive layouts and accessible form labels
 
 ## Prototype boundaries
 
-All records are synthetic examples. Data stays in localStorage on this browser. There is no authentication, real invite-code validation, cross-device sharing, email delivery, or background scheduler. Do not store real patient information in this prototype. For production, add authenticated accounts, server-enforced membership permissions, protected storage, audit records, an email provider, and idempotent scheduled reminder jobs. Pill appearance is only a memory aid and must not be used to identify an unknown pill or provide dosing advice.
+Account tokens live in this tab's sessionStorage. Cloud records stay in memory and Supabase, separate from demo localStorage. Signing out clears the loaded profile. Owners and authorized members can read a care profile; owners and editor members can save; viewers cannot write. New profiles receive owner membership automatically. Member invitations and administration are not implemented: the demo invite code grants no access.
+
+Saves are transactional and use a revision check. Conflicting changes from another device are rejected. A failed save displays an error and blocks more edits; reload to recover the last saved version. Wait for “Saved to Supabase” before leaving. Other devices see updates on reload; live subscriptions are not implemented.
+
+Tests mock Supabase HTTP responses. They do not execute PostgreSQL policies. Real authentication, email confirmation, and database access isolation must be checked after configuring your project. Email reminders, password recovery, and background scheduling are not implemented. Use synthetic records until deployment and privacy controls are reviewed. Pill appearance is a memory aid; verify labels and follow prescribed instructions.
